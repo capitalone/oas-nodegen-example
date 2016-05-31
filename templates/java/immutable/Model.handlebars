@@ -1,0 +1,153 @@
+package {{package}};
+
+{{#unless x-abstract}}{{#if allVars}}
+import com.fasterxml.jackson.annotation.JsonProperty;
+{{/if}}
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;{{/unless}}
+{{#if isEntity}}
+import org.apache.commons.lang3.StringUtils;
+import org.openapis.example.nodegen.EntityBuilder;
+{{/if}}
+{{#unless x-abstract}}
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+{{/unless}}
+{{#if x-abstract}}
+{{#each imports}}import {{.}};
+{{/each}}
+{{else}}
+{{#each allImports}}import {{.}};
+{{/each}}
+{{/if}}
+{{#if description}}
+/**
+{{commentize description " * " width=100}}
+ */{{/if}}
+{{#unless x-abstract}}@JsonDeserialize(builder = {{classname}}.Builder.class){{/unless}}
+public interface {{classname}}{{x-typeParameters}}{{#if extends}} extends {{extends}}{{/if}} {
+{{#if vars}}{{#each vars}}{{#if enum}}
+  enum {{dataType}} {
+    {{#each enumNames}}{{#if @index}}, {{/if}}{{enum}}({{value}}){{/each}};
+
+    private {{dataType}}(String value) {
+      EnumUtils.setEnumName(this, value);
+    }
+  };
+  {{/if}}{{/each}}
+  {{#vars}}
+  /**{{#if description}}
+{{commentize description "   * " width=100}}{{/if}}{{#if minimum}}
+   * minimum: {{minimum}}{{/if}}{{#if maximum}}
+   * maximum: {{maximum}}{{/if}}
+   */
+  {{{dataType}}} {{getter}}();
+
+  {{/vars}}
+{{/if}}{{#unless x-abstract}}
+{{#annotations}}  {{{.}}}
+{{/annotations}}
+  @JacksonXmlRootElement(localName = "{{entityName}}")
+  public static class Impl implements {{classname}} {
+{{#allVars}}
+{{#annotations}}    {{{.}}}
+{{/annotations}}
+    private {{{dataType}}} {{name}};
+{{/allVars}}
+
+	public Impl() {
+	}
+
+    public Impl(Builder builder) {
+      {{#each allVars}}
+      this.{{name}} = builder.{{name}};
+      {{/each}}
+    }
+
+  {{#allVars}}
+    public {{{dataType}}} {{getter}}() {
+      return {{name}};
+    }
+
+    {{/allVars}}
+    
+    
+
+    @Override
+    public int hashCode() {
+      return HashCodeBuilder.reflectionHashCode(this, false);
+    }
+
+    @Override
+    public boolean equals(Object rhs) {
+      return EqualsBuilder.reflectionEquals(this, rhs, false);
+    }
+
+    @Override
+    public String toString() {
+      return ToStringBuilder.reflectionToString(this);
+    }
+  }
+
+  public static class Builder {{#if isEntity}}implements EntityBuilder<{{classname}}> {{/if}}{
+    {{#allVars}}
+    private {{{dataType}}} {{name}}{{#if defaultValue}} = {{{defaultValue}}}{{/if}};
+{{/allVars}}
+
+    {{#allVars}}
+    @JsonProperty("{{name}}")
+    public Builder {{name}}({{#if optionalDataType}}{{optionalDataType}}{{else}}{{dataType}}{{/if}} {{name}}) {
+      this.{{name}} = {{#if optionalDataType}}{{assign}}{{else}}{{name}}{{/if}};
+      return this;
+    }
+
+    {{/allVars}}
+    public Builder copy({{classname}} other) {
+      {{#each allVars}}
+      this.{{name}} = other.{{getter}}();
+      {{/each}}
+      return this;
+    }
+{{#if references}}{{#each references}}{{#if x-abstract}}{{else}}
+    public Builder copy({{classname}} other) {
+      {{#each allVars}}
+      this.{{name}} = other.{{getter}}();
+      {{/each}}
+      return this;
+    }
+    {{/if}}{{/each}}
+{{/if}}
+
+{{#if isEntity}}
+	public EntityBuilder<{{classname}}> setId(String id) {
+		if (StringUtils.isEmpty(this.id)) {
+			this.id = id;
+		}
+		
+		return this;
+	}
+	
+	public EntityBuilder<{{classname}}> setCreated(String createdBy, LocalDateTime createdDate) {
+		{{#if isAuditable}}
+		this.createdBy = createdBy;
+		this.createdDate = createdDate;
+		{{/if}}
+		return this;
+	}
+	
+	public EntityBuilder<{{classname}}> setModified(String modifiedBy, LocalDateTime modifiedDate) {
+		{{#if isAuditable}}
+		this.modifiedBy = modifiedBy;
+		this.modifiedDate = modifiedDate;
+		{{/if}}
+		return this;
+	}
+{{/if}}
+	
+    public {{classname}} build() {
+      return new Impl(this);
+    }
+  }{{/unless}}
+}

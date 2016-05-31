@@ -1,0 +1,301 @@
+swagger: '2.0'
+info:
+  title:          Open API Initiative Members API
+  description:    This is the interface used to manage OAI members.
+  contact:
+    name:           Open API Initiative (OAI)
+    url:            http://openapis.org
+    email:          support@openapis.org
+  license:
+    name:           Apache 2.0
+    url:            http://www.apache.org/licenses/LICENSE-2.0.html
+  version:        1.0.0
+host:           localhost
+basePath:       /nodegen
+schemes:
+  - http
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+
+#
+# PATHS
+#
+paths:
+  #MEMBERS
+  /members:
+    get:
+      tags:
+        - members
+      summary:        Find all members
+      description:    Returns all OAI members.
+      operationId:    findAllMembers
+      x-resource-operation: findAll
+      responses: 
+        200: 
+          description:    The paginated list of OAI members
+          schema:
+            $ref: '#/definitions/MemberList'
+    post: 
+      tags: 
+        - members
+      summary:        Create a new member
+      description:    Creates a single OAI member.
+      operationId:    createMember
+      x-resource-operation: create
+      parameters:
+        - name:               body
+          in:                 body
+          description:        The member information to create.
+          required:           true
+          schema:
+            $ref: '#/definitions/MemberUpdate'
+      responses:
+        201:
+          description:    The created member
+          schema:
+            $ref: '#/definitions/Member'
+  /members/many:
+    post:
+      tags: 
+        - members
+      summary:        Create new members
+      description:    Creates many OAI members.
+      operationId:    createMembers
+      x-resource-operation: createMany
+      parameters:
+        - name:               body
+          in:                 body
+          description:        The member information to create.
+          required:           true
+          schema:
+            $ref: '#/definitions/MemberUpdateList'
+      responses:
+        201:
+          description:    The created members
+          schema:
+            $ref: '#/definitions/MemberList'
+  /members/{id}:
+    get: 
+      tags: 
+        - members
+      summary:        Load a member
+      description:    Loads a single OAI member by their identifier.
+      operationId:    loadMember
+      x-resource-operation: load
+      parameters:
+        - $ref:               '#/parameters/entityId'
+      responses:
+        200: 
+          description:    The member, if found
+          schema: 
+            $ref: '#/definitions/Member'
+    put: 
+      tags: 
+        - members
+      summary:        Update a member
+      description:    Updates a single OAI member by their identifier
+      operationId:    updateMember
+      x-resource-operation: update
+      parameters:
+        - $ref:               '#/parameters/entityId'
+        - name:               body
+          in:                 body
+          description:        The member information to update.
+          required:           true
+          schema: 
+            $ref: '#/definitions/MemberUpdate'
+      responses: 
+        200: 
+          description:    The updated member
+          schema: 
+            $ref: '#/definitions/Member'
+    delete: 
+      tags: 
+        - members
+      summary:        Delete a member
+      description:    Deletes a single OAI member by their identifier.
+      operationId:    deleteMember
+      x-resource-operation: delete
+      parameters:
+        - $ref:               '#/parameters/entityId'
+      responses:
+        204:
+          description:    No response
+  /members/byName/{name}:
+    get: 
+      tags: 
+        - members
+      summary:        Find members by name
+      description:    Finds OAI members by name.
+      operationId:    findMembersByName
+      x-resource-operation: findByName
+      parameters:
+        - name:           name
+          in:             path
+          type:           string
+          description:    The member name
+          required:       true
+      responses:
+        200: 
+          description:    The list of matching members
+          schema: 
+            $ref: '#/definitions/MemberList'
+
+#
+# DEFINITIONS
+#
+definitions:
+
+  Entity:
+    required:
+      - id
+    properties:
+      id:
+        description:    The entity identifier
+        type:           string
+
+  Auditable:
+    required:
+      - createdBy
+      - createdDate
+      - modifiedBy
+      - modifiedDate
+    properties:
+      createdBy:
+        type:           string
+        description:    The user who created the entity
+      createdDate:
+        type:           string
+        format:         date-time
+        description:    The time the entity was created
+      modifiedBy:
+        type:           string
+        description:    The user who modified the entity
+      modifiedDate:
+        type:           string
+        format:         date-time
+        description:    The time the entity was modified
+
+  PaginatedList:
+    required:
+      - offset
+      - limit
+      - count
+      - total
+    properties:
+      offset:
+        type:           integer
+        format:         int32
+      limit:
+        type:           integer
+        format:         int32
+      count:
+        type:           integer
+        format:         int32
+      total:
+        type:           integer
+        format:         int32
+
+  # MEMBERS
+  MemberUpdate:
+    required:
+      - name
+    properties:
+      name:
+        type:           string
+        description:    The OAI member's name
+        x-stored-as:    nm
+        x-indexed:
+          name:         members-by-name
+          unique:       true
+      uri:
+        type:           string
+        description:    The OAI member's home page
+        x-indexed:
+          name:         members-by-uri
+
+  MemberUpdateList:
+    allOf:
+      - $ref:           '#/definitions/PaginatedList'
+      - type:           object
+        required:
+          - items
+        properties:
+          items:
+            type:           array
+            items:
+              $ref:          '#/definitions/MemberUpdate'
+            description:    The list of member updates
+
+  Member:
+    allOf:
+      - $ref:           '#/definitions/Entity'
+      - $ref:           '#/definitions/MemberUpdate'
+      - $ref:           '#/definitions/Auditable'
+
+  MemberList:
+    allOf:
+      - $ref:           '#/definitions/PaginatedList'
+      - type:           object
+        required:
+          - items
+        properties:
+          items:
+            type:           array
+            items:
+              $ref:          '#/definitions/Member'
+            description:    The list of members
+
+  OtherThing:
+    properties:
+      foo:
+        type: string
+      bar:
+        type: string
+
+  # Technical Developer Community (TDC) Members
+  TdcMemberUpdate:
+    allOf:
+      - $ref:           '#/definitions/MemberUpdate'
+      - $ref:           '#/definitions/OtherThing'
+      - type: object
+        required:
+          - handle
+        properties:
+          handle:
+            type:           string
+            description:    The TDC member's online handle (e.g. Twitter)
+            x-stored-as:    hd
+
+  TdcMember:
+    allOf:
+      - $ref:           '#/definitions/Entity'
+      - $ref:           '#/definitions/TdcMemberUpdate'
+      - $ref:           '#/definitions/Auditable'
+
+  TdcMemberList:
+    allOf:
+      - $ref:           '#/definitions/PaginatedList'
+      - type:           object
+        required:
+          - items
+        properties:
+          items:
+            type:           array
+            items:
+              $ref:          '#/definitions/TdcMember'
+            description:    The list of TDC members
+
+#
+# PARAMETERS
+#
+parameters:
+  entityId:
+    name:           id
+    in:             path
+    type:           string
+    description:    The entity identifier
+    required:       true

@@ -1,0 +1,11 @@
+package org.openapis.example.nodegen;
+
+import java.util.List;
+
+import org.openapis.example.common.Repository;
+import org.springframework.data.mongodb.repository.Query;
+
+public interface MemberRepository extends Repository<Member{{type}}> {
+	@Query("{ nm: ?0 }")
+	public List<Member> findByName(String firstName);
+}

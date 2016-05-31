@@ -1,0 +1,28 @@
+{
+  "name" : "oai-nodegen-example",
+  "description": "An example project that demonstrates generating code from OAS (FKA Swagger) using oas-nodegen.",
+  "version" : "0.0.1",
+  "author": "Phil Kedy <phil.kedy@gmail.com>",
+  "license": "Apache-2.0",
+  "keywords": [
+    "swagger",
+    "rest",
+    "restful",
+    "api"
+  ],
+  "scripts": {
+    "build": "node codegen.js"
+  },
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/capitalone/oas-nodegen-example.git"
+  },
+  "dependencies": {
+    "inflection": "^1.8.0",
+    "lodash": "^3.10.1",
+    "oas-nodegen": "git+https://github.com/capitalone/oas-nodegen.git#18e138735b75bf6b285e39a5f8da1f010c415765"
+  },
+  "engines": {
+    "node": ">= 0.10.0"
+  }
+}

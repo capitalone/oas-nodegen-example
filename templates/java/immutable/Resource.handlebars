@@ -1,0 +1,45 @@
+package {{package}};
+
+import javax.inject.Inject;
+{{#imports}}import {{.}};
+{{/imports}}
+
+{{#if annotations}}{{#annotations}}{{{.}}}
+{{/annotations}}{{/if}}public class {{classname}}Resource{{#if parent}} extends {{{parent}}}{{/if}} {
+private {{classname}}Repository service;
+	@Inject
+	public {{classname}}Resource({{classname}}Repository service) {
+		super(service);
+
+		this.service = service;
+	}
+
+	@Override
+	protected EntityBuilder<{{classname}}> copy({{classname}}Update entity) {
+		return new {{classname}}.Builder().copy(entity);
+	}
+
+	@Override
+	protected EntityBuilder<{{classname}}> copy({{classname}} entity, {{classname}}Update updated) {
+		return new {{classname}}.Builder().copy(entity).copy(updated);
+	}
+
+{{#operations}}
+	/**
+{{#if summary}}	 * {{{summary}}}
+{{/if}}{{#if description}}	 *
+{{commentize description "	 * " width=100}}{{/if}}{{#if parameters}}
+	 *{{#parameters}}
+	 * @param {{varname}}
+	 *            {{description}}{{/parameters}}{{/if}}{{#if returnDescription}}
+	 * @return
+	 *            {{returnDescription}}{{/if}}
+	 */
+{{#if annotations}}{{#annotations}}	{{{.}}}
+{{/annotations}}{{/if}}	public {{{returnType}}} {{methodName}}({{#parameters}}{{#if @index}},
+	{{/if}}{{#annotations}}{{{.}}} {{/annotations}}{{{dataType}}} {{varname}}{{/parameters}}) {
+		{{#if hasReturn}}return {{#if isPaginatedList}}new PaginatedList<Member>({{/if}}{{/if}}service.{{methodName}}({{#parameters}}{{#if @index}}, {{/if}}{{varname}}{{/parameters}}{{#if isPaginatedList}}){{/if}});
+	}
+
+{{/operations}}
+}

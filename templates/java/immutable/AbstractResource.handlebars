@@ -1,0 +1,105 @@
+package org.openapis.example.nodegen;
+
+import static java.util.stream.Collectors.toList;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.openapis.example.common.PaginatedList;
+import org.openapis.example.common.Repository;
+
+@SuppressWarnings("unchecked")
+public abstract class AbstractResource<T extends Entity, IMPL extends T, U> {
+	private Repository<IMPL> service;
+
+	public AbstractResource(Repository<IMPL> service) {
+		this.service = service;
+	}
+
+	protected abstract EntityBuilder<T> copy(T entity, U updated);
+
+	protected abstract EntityBuilder<T> copy(U entity);
+
+	@POST
+	public T create(U entity) {
+		LocalDateTime now = LocalDateTime.now();
+		String user = getUserName();
+		T toInsert = copy(entity)
+				.setCreated(user, now)
+				.setModified(user, now)
+				.build();
+
+		return (T) service.insert((IMPL) toInsert);
+	}
+
+	@POST
+	@Path("/many")
+	public PaginatedList<T> createMany(PaginatedList<U> list) {
+		LocalDateTime now = LocalDateTime.now();
+		String user = getUserName();
+
+		List<IMPL> entities = list.getItems().stream().map(entity -> (IMPL) copy(entity)
+				.setCreated(user, now)
+				.setModified(user, now).build()).collect(toList());
+
+		return new PaginatedList<T>(convert(service.insert(entities)));
+	}
+
+	@GET
+	public PaginatedList<T> findAll() {
+		return new PaginatedList<T>(convert(service.findAll()));
+	}
+
+	@GET
+	@Path("/{id}")
+	public T load(@PathParam("id") String id) {
+		T entity = (T) service.findOne(id);
+
+		if (entity == null) {
+			throw new NotFoundException();
+		}
+
+		return entity;
+	}
+
+	@PUT
+	@Path("/{id}")
+	public T update(@PathParam("id") String id, U update) {
+		// Spring data does not seem to have an update, only save. So we have to
+		// check that the entity exists first
+		T existing = service.findOne(id);
+
+		if (existing != null) {
+			LocalDateTime now = LocalDateTime.now();
+			String user = getUserName();
+			T toSave = copy((T) existing, update).setId(id).setModified(user, now).build();
+
+			return (T) service.save((IMPL) toSave);
+		} else {
+			throw new NotFoundException();
+		}
+	}
+
+	@DELETE
+	@Path("/{id}")
+	public void delete(@PathParam("id") String id) {
+		service.delete(id);
+	}
+
+	protected List<T> convert(List<IMPL> values) {
+		return values.stream().map(i -> (T) i).collect(toList());
+	}
+
+	private String getUserName() {
+		return RandomStringUtils.randomAlphabetic(6);
+	}
+}

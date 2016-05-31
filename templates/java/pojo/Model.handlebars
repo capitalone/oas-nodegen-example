@@ -1,0 +1,71 @@
+package {{package}};
+
+{{#each imports}}import {{.}};
+{{/each}}
+
+{{#unless x-abstract}}
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+{{/unless}}
+{{#if description}}/**
+{{commentize description " * " width=100}}
+ */{{/if}}{{#annotations}}
+{{.}}{{/annotations}}
+public {{#if x-abstract}}interface{{else}}class{{/if}} {{classname}}{{#if parent}} extends {{{parent}}}{{/if}}{{#if implements}} implements {{implements}}{{/if}} {
+{{#if x-abstract}}
+  {{#vars}}
+  /**{{#if description}}
+{{commentize description "   * " width=100}}{{/if}}{{#if minimum}}
+   * minimum: {{minimum}}{{/if}}{{#if maximum}}
+   * maximum: {{maximum}}{{/if}}
+   */
+  {{{dataType}}} {{getter}}();
+  void {{setter}}({{{dataType}}} {{name}});
+
+  {{/vars}}
+{{else}}
+  {{#vars}}{{#if enum}}
+  
+  public enum {{dataType}} {
+    {{#enum}}{{#if @index}}, {{/if}}{{.}}{{/enum}}
+  };
+{{#annotations}}  {{{.}}}
+{{/annotations}}
+  private {{{dataType}}} {{name}};{{else}}
+
+{{#annotations}}  {{{.}}}
+{{/annotations}}
+  private {{{dataType}}} {{name}}{{#if defaultValue}} = {{{defaultValue}}}{{/if}};{{/if}}{{/vars}}
+
+  {{#vars}}
+  /**{{#if description}}
+{{commentize description "   * " width=100}}{{/if}}{{#if minimum}}
+   * minimum: {{minimum}}{{/if}}{{#if maximum}}
+   * maximum: {{maximum}}{{/if}}
+   */
+  public {{{dataType}}} {{getter}}() {
+    return {{name}};
+  }
+  public void {{setter}}({{{dataType}}} {{name}}) {
+    this.{{name}} = {{name}};
+  }
+
+  {{/vars}}
+
+  @Override
+  public int hashCode() {
+    return HashCodeBuilder.reflectionHashCode(this, false);
+  }
+
+  @Override
+  public boolean equals(Object rhs) {
+    return EqualsBuilder.reflectionEquals(this, rhs, false);
+  }
+
+  @Override
+  public String toString() {
+    return ToStringBuilder.reflectionToString(this);
+  }
+{{/if}}
+}
